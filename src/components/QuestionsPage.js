@@ -1,12 +1,13 @@
+// src/components/QuestionsPage.js
 import React, { useState, useEffect } from 'react';
-import questionsData from '../utils/questionsData';
+// import questionsData from '../utils/questionsData';
+import questionsData from '../utils/questionsData'
+import { Link } from 'react-router-dom';
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
-    // Simulate fetching data
-    // Here we just set the mock data directly
     setQuestions(questionsData);
   }, []);
 
@@ -17,16 +18,26 @@ const QuestionsPage = () => {
         <p>Loading questions...</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {questions.map((q) => (
-            <li 
-              key={q.id} 
-              style={{ border: '1px solid #ccc', marginBottom: '1rem', padding: '1rem', borderRadius: '4px' }}
-            >
-              <h3>{q.title}</h3>
-              <p>{q.description}</p>
-              <button>View Answers</button>
-            </li>
-          ))}
+          {questions.map((q) => {
+            // Format postedAt as a readable string
+            const postedTime = q.postedAt.toLocaleString();
+            return (
+              <li 
+                key={q.id} 
+                style={{ border: '1px solid #ccc', marginBottom: '1rem', padding: '1rem', borderRadius: '4px' }}
+              >
+                <h3>{q.title}</h3>
+                <p>{q.description}</p>
+                <p>
+                  <strong>Posted:</strong> {postedTime} by {q.postedBy} at {q.company} <br/>
+                  <strong>Type:</strong> {q.type}
+                </p>
+                <Link to={`/questions/${q.id}`}>
+                  <button className="form-button">View Answers</button>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -34,4 +45,3 @@ const QuestionsPage = () => {
 };
 
 export default QuestionsPage;
-

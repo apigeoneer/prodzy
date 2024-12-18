@@ -9,6 +9,7 @@ import StoriesPage from '../components/StoriesPage';
 import ProfilePage from '../components/ProfilePage';
 import Login from '../components/Login';
 import Signup from '../components/SignUp';
+import QuestionDetailPage from '../components/QuestionDetailPage';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -51,13 +52,14 @@ const App = () => {
         )}
 
         <Routes>
-          <Route path="/questions" element={<QuestionsPage />} />
-          <Route path="/stories" element={<StoriesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
           {/* checks if the user is logged in before rendering the login/signup pages */}
           {!user && <Route path="/login" element={<Login />} />}
           {!user && <Route path="/signup" element={<Signup />} />}
+          <Route path="/questions" element={<QuestionsPage />} />
+          <Route path="/stories" element={<StoriesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/" element={<div>Home</div>} />
+          <Route path="/questions/:id" element={<QuestionDetailPage />} /> 
         </Routes>
       </div>
     </Router>
