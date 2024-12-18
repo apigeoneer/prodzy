@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import questionsData from '../utils/questionsData';
 import answersData from '../utils/answersData';
+import { timeAgo } from '../utils/formatTime';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
+
 
 const QuestionAnswersPage = () => {
   const { id } = useParams();
@@ -17,21 +21,30 @@ const QuestionAnswersPage = () => {
 
   // Update likes for an answer
   const handleLike = (index) => {
-    // Create a new array copy so we respect immutability
     const updatedAnswers = [...answers];
-    updatedAnswers[index] = {
-      ...updatedAnswers[index],
-      likes: updatedAnswers[index].likes + 1
-    };
+    const answer = { ...updatedAnswers[index] };
+  
+    if (!answer.likedByUser) {
+      // User has not liked yet; like it
+      answer.likes += 1;
+      answer.likedByUser = true;
+    } else {
+      // User already liked; unlike it
+      answer.likes -= 1;
+      answer.likedByUser = false;
+    }
+  
+    updatedAnswers[index] = answer;
     setAnswers(updatedAnswers);
   };
+  
 
   const [commentInputs, setCommentInputs] = useState({}); 
-// commentInputs will be an object like { [index]: "comment text" }
+    // commentInputs will be an object like { [index]: "comment text" }
 
-const handleCommentChange = (index, value) => {
-  setCommentInputs({ ...commentInputs, [index]: value });
-};
+  const handleCommentChange = (index, value) => {
+    setCommentInputs({ ...commentInputs, [index]: value });
+  };
 
 const handleCommentSubmit = (index, e) => {
   e.preventDefault();
@@ -55,6 +68,13 @@ const toggleComments = (index) => {
       [index]: !prev[index]
     }));
   };
+
+  // Allow user to share an answer
+  const handleShare = (answer) => {
+    // For now, just show an alert. In the future, you can copy a URL to clipboard.
+    alert(`Share this link: https://example.com/questions/${questionId}/answers`);
+  };
+  
   
 
   // When we load answers in useEffect, ensures every answer object has a comments field. If comments didn’t exist before, we set it to []
@@ -64,7 +84,8 @@ const toggleComments = (index) => {
       .sort((a, b) => b.likes - a.likes)
       .map((answer) => ({
         ...answer,
-        comments: answer.comments || []
+        comments: answer.comments || [],
+        likedByUser: answer.likedByUser || false   // Allow a user to only like an snwer once
       }));
     
     setAnswers(filteredAnswers);
@@ -73,6 +94,7 @@ const toggleComments = (index) => {
   if (!question) {
     return <p>Question not found.</p>;
   }
+  
 
   // We'll add form controls next
   return (
@@ -122,6 +144,8 @@ const toggleComments = (index) => {
       </form>
     )}
 
+    <hr style={{ margin: '1.5rem 0', border: 'none', borderBottom: '1px solid #ccc' }} />
+
     {/* All answers (sorted by likes) */}
 
       <h2>All Answers</h2>
@@ -135,15 +159,23 @@ const toggleComments = (index) => {
     <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
       <p>{answer.text}</p>
       <p><strong>Likes:</strong> {answer.likes}</p>
-      <p><strong>By:</strong> {answer.postedBy} on {answer.postedAt.toLocaleString()}</p>
+      {/* <p><strong>By:</strong> {answer.postedBy} on {answer.postedAt.toLocaleString()}</p> */}
+      <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
 
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-        <button className="form-button" onClick={() => handleLike(index)}>Like</button>
-        <button className="form-button">Comment</button>
-        <button className="form-button">Share</button>
-      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+      <button className="form-button" onClick={() => handleLike(index)}>
+        <FontAwesomeIcon icon={faThumbsUp} color={answer.likedByUser ? "blue" : "inherit"} />
+        </button>
+        <button className="form-button" onClick={() => toggleComments(index)}>
+            <FontAwesomeIcon icon={faComment} />
+        </button>
+        <button className="form-button" onClick={() => handleShare(answer)}>
+            <FontAwesomeIcon icon={faShare} />
+        </button>
+    </div>
+
       
-      {/* Toggle link for comments */}
+      {/* Toggle link for comments
       <div style={{ marginTop: '0.5rem' }}>
         <button 
           className="form-button" 
@@ -152,7 +184,7 @@ const toggleComments = (index) => {
         >
           {isCommentsVisible ? "Hide Comments" : "Show Comments"}
         </button>
-      </div>
+      </div> */}
 
       {/* Conditionally render comments & comment form */}
       {isCommentsVisible && (

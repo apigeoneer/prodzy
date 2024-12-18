@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 // import questionsData from '../utils/questionsData';
 import questionsData from '../utils/questionsData'
 import { Link } from 'react-router-dom';
+import { timeAgo } from '../utils/formatTime';
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -29,7 +30,7 @@ const QuestionsPage = () => {
                 <h3>{q.title}</h3>
                 <p>{q.description}</p>
                 <p>
-                  <strong>Posted:</strong> {postedTime} by {q.postedBy} at {q.company} <br/>
+                  <strong>Posted:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
                   <strong>Type:</strong> {q.type}
                 </p>
                 <Link to={`/questions/${q.id}/answers`}>

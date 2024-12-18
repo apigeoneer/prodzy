@@ -183,4 +183,25 @@ body {
   .profile-icon:hover {
     color: #6a001a;
   }
+
+
+  /* QuestionAnswersPage.js */
+
+  .form-button {
+    background: #800020; /* example burgundy color */
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.6rem; /* slightly smaller for icons */
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .form-button:hover {
+    background: #6a001a;
+  }
+  
   

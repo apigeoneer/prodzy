@@ -12,6 +12,8 @@ import Signup from '../components/SignUp';
 import QuestionDetailPage from '../components/QuestionDetailPage';
 import QuestionAnswersPage from '../components/QuestionAnswersPage';
 
+
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [showStatusBar, setShowStatusBar] = useState(true);
