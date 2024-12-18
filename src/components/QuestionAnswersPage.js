@@ -26,6 +26,36 @@ const QuestionAnswersPage = () => {
     setAnswers(updatedAnswers);
   };
 
+  const [commentInputs, setCommentInputs] = useState({}); 
+// commentInputs will be an object like { [index]: "comment text" }
+
+const handleCommentChange = (index, value) => {
+  setCommentInputs({ ...commentInputs, [index]: value });
+};
+
+const handleCommentSubmit = (index, e) => {
+  e.preventDefault();
+  const text = commentInputs[index]?.trim();
+  if (!text) return;
+
+  const updatedAnswers = [...answers];
+  const answerToUpdate = { ...updatedAnswers[index] };
+  answerToUpdate.comments = [...answerToUpdate.comments, { text, postedAt: new Date(), postedBy: "currentUser" }];
+  updatedAnswers[index] = answerToUpdate;
+
+  setAnswers(updatedAnswers);
+  setCommentInputs({ ...commentInputs, [index]: "" });
+};
+
+const [commentsVisibility, setCommentsVisibility] = useState({});
+
+const toggleComments = (index) => {
+    setCommentsVisibility((prev) => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+  
 
   // When we load answers in useEffect, ensures every answer object has a comments field. If comments didn’t exist before, we set it to []
   useEffect(() => {
@@ -98,20 +128,68 @@ const QuestionAnswersPage = () => {
       {answers.length === 0 ? (
         <p>No answers yet. Be the first to add one!</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {answers.map((answer, index) => (
-            <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
-              <p>{answer.text}</p>
-              <p><strong>Likes:</strong> {answer.likes}</p>
-              <p><strong>By:</strong> {answer.postedBy} on {answer.postedAt.toLocaleString()}</p>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <button className="form-button" onClick={() => handleLike(index)}>Like</button>
-                <button className="form-button">Comment</button>
-                <button className="form-button">Share</button>
-              </div>
-            </li>
-          ))}
-        </ul>
+<ul style={{ listStyle: 'none', padding: 0 }}>
+{answers.map((answer, index) => {
+  const isCommentsVisible = commentsVisibility[index] || false;
+  return (
+    <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
+      <p>{answer.text}</p>
+      <p><strong>Likes:</strong> {answer.likes}</p>
+      <p><strong>By:</strong> {answer.postedBy} on {answer.postedAt.toLocaleString()}</p>
+
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+        <button className="form-button" onClick={() => handleLike(index)}>Like</button>
+        <button className="form-button">Comment</button>
+        <button className="form-button">Share</button>
+      </div>
+      
+      {/* Toggle link for comments */}
+      <div style={{ marginTop: '0.5rem' }}>
+        <button 
+          className="form-button" 
+          type="button" 
+          onClick={() => toggleComments(index)}
+        >
+          {isCommentsVisible ? "Hide Comments" : "Show Comments"}
+        </button>
+      </div>
+
+      {/* Conditionally render comments & comment form */}
+      {isCommentsVisible && (
+        <div style={{ marginTop: '1rem', borderTop: '1px solid #ccc', paddingTop: '0.5rem' }}>
+          {answer.comments.length > 0 && (
+            <>
+              <h4>Comments:</h4>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {answer.comments.map((c, cIndex) => (
+                  <li key={cIndex} style={{ border: '1px solid #eee', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '4px' }}>
+                    <p>{c.text}</p>
+                    <p><em>by {c.postedBy} on {c.postedAt.toLocaleString()}</em></p>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {/* Comment form */}
+          <form onSubmit={(e) => handleCommentSubmit(index, e)} style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Add a comment..."
+              value={commentInputs[index] || ""}
+              onChange={(e) => handleCommentChange(index, e.target.value)}
+            />
+            <button className="form-button" type="submit">Submit Comment</button>
+          </form>
+        </div>
+      )}
+    </li>
+  );
+})}
+
+</ul>
+
       )}
     </div>
   );
