@@ -17,10 +17,20 @@ const Login = () => {
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Login</button>
+    <form className="auth-form" onSubmit={handleLogin}>
+        <input 
+            type="email" 
+            placeholder="Email" 
+            className="form-input"
+            onChange={(e) => setEmail(e.target.value)} 
+        />
+        <input 
+            type="password" 
+            placeholder="Password" 
+            className="form-input"
+            onChange={(e) => setPassword(e.target.value)} 
+        />
+        <button type="submit" className="form-button">Login</button>
     </form>
   );
 };

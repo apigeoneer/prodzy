@@ -1,9 +1,8 @@
-// App.js
 import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-
+import '../styles/style.css'
 import NavBar from '../components/NavBar';
 import QuestionsPage from '../components/QuestionsPage';
 import StoriesPage from '../components/StoriesPage';
@@ -13,29 +12,41 @@ import Signup from '../components/SignUp';
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [showStatusBar, setShowStatusBar] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // currentUser is null if not logged in
+      setUser(currentUser); 
     });
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   return (
     <Router>
-      <div>
-        <h1>Welcome to the Product Platform</h1>
-        <NavBar />
+      <header>
+        <h1>Prodzy - Crack The Toughest PM Interveiws</h1>
+      </header>
 
-        {user ? (
-          <div>
-            <p>Logged in as: {user.email}</p>
-            <button onClick={() => auth.signOut()}>Logout</button>
-          </div>
-        ) : (
-          <div>
-            <Link to="/login">Login</Link> | <Link to="/signup">Signup</Link>
+      <NavBar user={user} onLogout={() => auth.signOut()} />
+
+      <div className="container">
+        {showStatusBar && (
+          <div className="status-bar">
+            <div>
+              {user ? (
+                <p>Logged in as: {user.email}</p>
+              ) : (
+                <p>You are not logged in.</p>
+              )}
+            </div>
+            {/* Close icon on top right */}
+            <button 
+              className="status-bar-close" 
+              onClick={() => setShowStatusBar(false)}
+              aria-label="Close status bar"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -43,9 +54,10 @@ const App = () => {
           <Route path="/questions" element={<QuestionsPage />} />
           <Route path="/stories" element={<StoriesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/" element={<div>Select a page from the nav</div>} />
+          {/* checks if the user is logged in before rendering the login/signup pages */}
+          {!user && <Route path="/login" element={<Login />} />}
+          {!user && <Route path="/signup" element={<Signup />} />}
+          <Route path="/" element={<div>Home</div>} />
         </Routes>
       </div>
     </Router>
