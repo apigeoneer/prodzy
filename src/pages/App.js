@@ -10,6 +10,7 @@ import ProfilePage from '../components/ProfilePage';
 import Login from '../components/Login';
 import Signup from '../components/SignUp';
 import QuestionDetailPage from '../components/QuestionDetailPage';
+import QuestionAnswersPage from '../components/QuestionAnswersPage';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -60,6 +61,7 @@ const App = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/" element={<div>Home</div>} />
           <Route path="/questions/:id" element={<QuestionDetailPage />} /> 
+          <Route path="/questions/:id/answers" element={<QuestionAnswersPage />} />
         </Routes>
       </div>
     </Router>

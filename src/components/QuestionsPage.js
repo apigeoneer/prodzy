@@ -32,7 +32,7 @@ const QuestionsPage = () => {
                   <strong>Posted:</strong> {postedTime} by {q.postedBy} at {q.company} <br/>
                   <strong>Type:</strong> {q.type}
                 </p>
-                <Link to={`/questions/${q.id}`}>
+                <Link to={`/questions/${q.id}/answers`}>
                   <button className="form-button">View Answers</button>
                 </Link>
               </li>
