@@ -6,8 +6,8 @@ const NavBar = ({ user, onLogout }) => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Link to="/questions" className="nav-link">Questions</Link>
-        <Link to="/stories" className="nav-link">Stories</Link>
+        <Link to="/questions" className="nav-link">Interview Questions</Link>
+        <Link to="/stories" className="nav-link">PM Stories</Link>
       </div>
       <div className="navbar-right">
         {user ? (

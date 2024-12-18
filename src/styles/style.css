@@ -30,7 +30,7 @@ body {
   nav a {
     margin-right: 1rem;
     text-decoration: none;
-    color: #1a73e8;
+    color: #800020;
   }
   
   nav a:hover {
@@ -69,7 +69,7 @@ body {
   } 
   
   button {
-    background: #6200ee;
+    background: #800020;
     color: #fff;
     border: none;
     padding: 0.5rem 0.75rem;
@@ -78,11 +78,11 @@ body {
   }
   
   button:hover {
-    background: #4b00bb;
+    background: #6a001a;
   }
   
   a {
-    color: #6200ee;
+    color: #800020;
     font-weight: bold;
   }
   
@@ -109,12 +109,12 @@ body {
   }
   
   .form-input:focus {
-    border-color: #6200ee;
+    border-color: #800020;
     outline: none;
   }
   
   .form-button {
-    background: #6200ee;
+    background: #800020;
     color: #fff;
     border: none;
     padding: 0.5rem 1rem;
@@ -150,7 +150,7 @@ body {
   }
   
   .logout-button {
-    background: #6200ee;
+    background: #800020;
     color: #fff;
     border: none;
     padding: 0.4rem 0.75rem;
@@ -160,12 +160,12 @@ body {
   }
   
   .logout-button:hover {
-    background: #4b00bb;
+    background: #6a001a;
   } 
   
   .nav-link {
     text-decoration: none;
-    color: #6200ee;
+    color: #800020;
     font-weight: bold;
   }
   
@@ -176,11 +176,11 @@ body {
   .profile-icon {
     text-decoration: none;
     font-size: 1.2rem;
-    color: #6200ee;
+    color: #800020;
     transition: color 0.2s ease;
   }
   
   .profile-icon:hover {
-    color: #4b00bb;
+    color: #6a001a;
   }
   
