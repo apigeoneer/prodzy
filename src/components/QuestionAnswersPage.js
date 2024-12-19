@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import questionsData from '../utils/questionsData';
-import answersData from '../utils/answersData';
+// import answersData from '../utils/answersData';
+import { getAnswersForQuestion } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
@@ -74,25 +75,32 @@ const toggleComments = (index) => {
     // For now, just show an alert. In the future, you can copy a URL to clipboard.
     alert(`Share this link: https://example.com/questions/${questionId}/answers`);
   };
-  
-  
 
-  // When we load answers in useEffect, ensures every answer object has a comments field. If comments didn’t exist before, we set it to []
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const filteredAnswers = answersData
-      .filter((a) => a.questionId === questionId)
-      .sort((a, b) => b.likes - a.likes)
-      .map((answer) => ({
-        ...answer,
-        comments: answer.comments || [],
-        likedByUser: answer.likedByUser || false   // Allow a user to only like an snwer once
-      }));
-    
-    setAnswers(filteredAnswers);
+    setLoading(true);
+    getAnswersForQuestion(questionId).then((data) => {
+      const processedAnswers = data
+        .sort((a, b) => b.likes - a.likes)
+        .map((answer) => ({
+          ...answer,
+          comments: answer.comments || [],
+          likedByUser: answer.likedByUser || false   // Allow a user to only like an answer once
+        }));
+  
+      setAnswers(processedAnswers);
+      setLoading(false);
+    });
   }, [questionId]);
+
 
   if (!question) {
     return <p>Question not found.</p>;
+  }
+
+  if (loading) {
+    return <p>Loading answers...</p>;
   }
   
 
@@ -174,18 +182,6 @@ const toggleComments = (index) => {
         </button>
     </div>
 
-      
-      {/* Toggle link for comments
-      <div style={{ marginTop: '0.5rem' }}>
-        <button 
-          className="form-button" 
-          type="button" 
-          onClick={() => toggleComments(index)}
-        >
-          {isCommentsVisible ? "Hide Comments" : "Show Comments"}
-        </button>
-      </div> */}
-
       {/* Conditionally render comments & comment form */}
       {isCommentsVisible && (
         <div style={{ marginTop: '1rem', borderTop: '1px solid #ccc', paddingTop: '0.5rem' }}>
@@ -228,3 +224,4 @@ const toggleComments = (index) => {
 };
 
 export default QuestionAnswersPage;
+

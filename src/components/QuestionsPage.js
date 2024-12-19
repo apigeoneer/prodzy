@@ -1,22 +1,27 @@
 // src/components/QuestionsPage.js
 import React, { useState, useEffect } from 'react';
-// import questionsData from '../utils/questionsData';
-import questionsData from '../utils/questionsData'
+import { getQuestions } from '../services/dataService';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../utils/formatTime';
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setQuestions(questionsData);
+    getQuestions().then((data) => {
+      setQuestions(data);
+      setLoading(false);
+    });
   }, []);
+
+  if (loading) return <p>Loading questions...</p>;
 
   return (
     <div>
       <h2>Interview Questions</h2>
       {questions.length === 0 ? (
-        <p>Loading questions...</p>
+        <p>No questions available.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {questions.map((q) => {
@@ -46,3 +51,4 @@ const QuestionsPage = () => {
 };
 
 export default QuestionsPage;
+
