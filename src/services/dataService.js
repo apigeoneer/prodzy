@@ -1,5 +1,6 @@
 import questionsData from '../utils/questionsData';
 import answersData from '../utils/answersData';
+import storiesData from '../utils/storiesData';
 
 
 // Wrap the mock data in Promise-based functions, simulating an async fetch.
@@ -18,6 +19,14 @@ export async function getAnswersForQuestion(questionId) {
     setTimeout(() => {
       const filteredAnswers = answersData.filter(a => a.questionId === questionId);
       resolve(filteredAnswers);
+    }, 200);
+  });
+}
+
+export async function getStories() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(storiesData);
     }, 200);
   });
 }
