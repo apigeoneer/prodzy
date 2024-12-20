@@ -4,7 +4,7 @@ import { getAnswersForQuestion } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
-import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 
@@ -38,7 +38,6 @@ const QuestionAnswersPage = () => {
     // ));
   };
   
-
   const [commentInputs, setCommentInputs] = useState({}); 
     // commentInputs will be an object like { [index]: "comment text" }
 
@@ -144,6 +143,24 @@ const toggleComments = (index) => {
       setLoading(false);
     });
   }, [questionId]);
+
+ 
+  // Fetch the question using a query by questionId field instead of document ID to eliminate any mismatch between questionId and Firestore Document ID
+  useEffect(() => {
+    const fetchQuestion = async () => {
+      const qRef = collection(db, "questions");
+      const qQuery = query(qRef, where("questionId", "==", questionId));
+      const qSnap = await getDocs(qQuery);
+  
+      if (!qSnap.empty) {
+        setQuestion(qSnap.docs[0].data());
+      } else {
+        setQuestion(null);
+      }
+    };
+  
+    fetchQuestion();
+  }, [questionId]);  
 
 
   if (question === null) {

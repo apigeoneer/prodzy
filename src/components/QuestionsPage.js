@@ -4,7 +4,7 @@ import { getQuestions } from '../services/dataService';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../utils/formatTime';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -42,12 +42,13 @@ const QuestionsPage = () => {
     const newQuestion = {
       title: newTitle.trim(),
       description: newDescription.trim(),
-      postedAt: new Date(),
+      // postedAt: new Date(),
+      postedAt: Timestamp.fromDate(new Date()), // Firebase expcets Timestamp objects for dates
       postedBy: "Anonymous",
       likes: 0,
       company: newCompany.trim() || "",
       type: newType.trim() || "",
-      id: questions.length + 1
+      questionId: questions.length + 1
     };
 
     console.log("New Question Object:", newQuestion);
@@ -86,6 +87,9 @@ const QuestionsPage = () => {
   }, []);
 
   if (loading) return <p>Loading questions...</p>;
+
+  console.log("Questions array:", questions);
+
 
   return (
     <div>
@@ -132,7 +136,7 @@ const QuestionsPage = () => {
             const postedTime = q.postedAt.toLocaleString();
             return (
               <li 
-                key={q.id} 
+                key={q.questionId} 
                 style={{ border: '1px solid #ccc', marginBottom: '1rem', padding: '1rem', borderRadius: '4px' }}
               >
                 <h3>{q.title}</h3>
@@ -141,7 +145,7 @@ const QuestionsPage = () => {
                   <strong>Posted:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
                   <strong>Type:</strong> {q.type}
                 </p>
-                <Link to={`/questions/${q.id}/answers`}>
+                <Link to={`/questions/${q.questionId}/answers`}>
                   <button className="form-button">View Answers</button>
                 </Link>
               </li>
