@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import questionsData from '../utils/questionsData';
-// import answersData from '../utils/answersData';
 import { getAnswersForQuestion } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
+import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 
 const QuestionAnswersPage = () => {
   const { id } = useParams();
   const questionId = parseInt(id, 10);
 
-  const question = questionsData.find((q) => q.id === questionId);
+  const [question, setQuestion] = useState(null);
 
   const [showAnswerForm, setShowAnswerForm] = useState(false);
   const [newAnswerText, setNewAnswerText] = useState("");
@@ -20,23 +20,22 @@ const QuestionAnswersPage = () => {
   // Initialize local state with the filtered and sorted answers
   const [answers, setAnswers] = useState([]);
 
-  // Update likes for an answer
-  const handleLike = (index) => {
-    const updatedAnswers = [...answers];
-    const answer = { ...updatedAnswers[index] };
+  const handleLike = async (answerId, currentLikes, currentlyLikedByUser) => {
+    const answerDocRef = doc(db, "answers", answerId);
+    const newLikesCount = currentlyLikedByUser ? currentLikes - 1 : currentLikes + 1;
   
-    if (!answer.likedByUser) {
-      // User has not liked yet; like it
-      answer.likes += 1;
-      answer.likedByUser = true;
-    } else {
-      // User already liked; unlike it
-      answer.likes -= 1;
-      answer.likedByUser = false;
-    }
+    await updateDoc(answerDocRef, {
+      likes: newLikesCount
+    });
   
-    updatedAnswers[index] = answer;
+    // Option A: Re-fetch data
+    const updatedAnswers = await getAnswersForQuestion(questionId);
     setAnswers(updatedAnswers);
+  
+    // Option B: Optimistic update
+    // setAnswers(prev => prev.map(a =>
+    //   a.id === answerId ? { ...a, likes: newLikesCount, likedByUser: !currentlyLikedByUser } : a
+    // ));
   };
   
 
@@ -47,17 +46,28 @@ const QuestionAnswersPage = () => {
     setCommentInputs({ ...commentInputs, [index]: value });
   };
 
-const handleCommentSubmit = (index, e) => {
+  const handleAddComment = async (answerId, commentText) => {
+    const answerDocRef = doc(db, "answers", answerId);
+  
+    await updateDoc(answerDocRef, {
+      comments: arrayUnion({
+        text: commentText.trim(),
+        postedBy: "currentUser",
+        postedAt: new Date()
+      })
+    });
+  
+    // After updating, re-fetch answers so the UI updates
+    const updatedAnswers = await getAnswersForQuestion(questionId);
+    setAnswers(updatedAnswers);
+  };
+
+const handleCommentSubmit = async (index, e) => {
   e.preventDefault();
   const text = commentInputs[index]?.trim();
   if (!text) return;
 
-  const updatedAnswers = [...answers];
-  const answerToUpdate = { ...updatedAnswers[index] };
-  answerToUpdate.comments = [...answerToUpdate.comments, { text, postedAt: new Date(), postedBy: "currentUser" }];
-  updatedAnswers[index] = answerToUpdate;
-
-  setAnswers(updatedAnswers);
+  await handleAddComment(answers[index].id, text);
   setCommentInputs({ ...commentInputs, [index]: "" });
 };
 
@@ -78,6 +88,47 @@ const toggleComments = (index) => {
 
   const [loading, setLoading] = useState(true);
 
+  // Store answer data in Firestore so that it persists
+  const handleSubmitAnswer = async (e) => {
+    e.preventDefault();
+    if (!newAnswerText.trim()) return;
+  
+    const newAnswer = {
+      questionId,
+      text: newAnswerText.trim(),
+      postedBy: "currentUser",
+      postedAt: new Date(),
+      likes: 0,
+      comments: [],  // Initially empty array
+      likedByUser: false
+    };
+  
+    await addDoc(collection(db, "answers"), newAnswer);
+    
+    // Re-fetch answers
+    const updatedAnswers = await getAnswersForQuestion(questionId);
+    setAnswers(updatedAnswers);
+  
+    // Clear the input
+    setNewAnswerText("");
+  };
+
+  // Fetch questions from Firestore
+  useEffect(() => {
+    const fetchQuestion = async () => {
+      const questionDocRef = doc(db, "questions", String(questionId));
+      const questionSnap = await getDoc(questionDocRef);
+      if (questionSnap.exists()) {
+        setQuestion(questionSnap.data());
+      } else {
+        setQuestion(null);
+      }
+    };
+  
+    fetchQuestion();
+  }, [questionId]);
+
+  // Handle the initial load of answers
   useEffect(() => {
     setLoading(true);
     getAnswersForQuestion(questionId).then((data) => {
@@ -95,7 +146,7 @@ const toggleComments = (index) => {
   }, [questionId]);
 
 
-  if (!question) {
+  if (question === null) {
     return <p>Question not found.</p>;
   }
 
@@ -122,23 +173,7 @@ const toggleComments = (index) => {
     {/* Conditionally render the form if showAnswerForm is true */}
     {showAnswerForm && (
       <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!newAnswerText.trim()) return;
-
-          const newAnswer = {
-            questionId: questionId,
-            text: newAnswerText.trim(),
-            postedBy: "currentUser",
-            postedAt: new Date(),
-            likes: 0,
-            comments: []
-          };
-
-          setAnswers([newAnswer, ...answers]);
-          setNewAnswerText("");
-          setShowAnswerForm(false);
-        }}
+        onSubmit={handleSubmitAnswer}
         style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', margin: '1rem 0' }}
       >
         <textarea
@@ -171,7 +206,7 @@ const toggleComments = (index) => {
       <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-      <button className="form-button" onClick={() => handleLike(index)}>
+      <button className="form-button" onClick={() => handleLike(answer.id, answer.likes, answer.likedByUser)}>
         <FontAwesomeIcon icon={faThumbsUp} color={answer.likedByUser ? "blue" : "inherit"} />
         </button>
         <button className="form-button" onClick={() => toggleComments(index)}>

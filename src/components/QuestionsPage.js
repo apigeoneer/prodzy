@@ -3,12 +3,82 @@ import React, { useState, useEffect } from 'react';
 import { getQuestions } from '../services/dataService';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../utils/formatTime';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newCompany, setNewCompany] = useState("");
+  const [newType, setNewType] = useState("");
+
   useEffect(() => {
+    // Initially fetch questions on mount
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    setLoading(true);
+    const data = await getQuestions();
+    setQuestions(data);
+    setLoading(false);
+  };
+
+  // Store question data in Firestore so that it persists
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!newTitle.trim() || !newDescription.trim() || !newCompany.trim() || !newType.trim()) {
+      alert("Please provide all title, description, company and type.");
+      return;
+    }
+    
+
+    // Create the new question object
+    const newQuestion = {
+      title: newTitle.trim(),
+      description: newDescription.trim(),
+      postedAt: new Date(),
+      postedBy: "Anonymous",
+      likes: 0,
+      company: newCompany.trim() || "",
+      type: newType.trim() || "",
+      id: questions.length + 1
+    };
+
+    console.log("New Question Object:", newQuestion);
+
+    try {
+      // 1. Add the new question to Firestore
+      await addDoc(collection(db, "questions"), newQuestion);
+
+      // 2. Re-fetch or Optimistically Update State
+
+      // Option A: Re-Fetch Questions (simpler, ensures data is always accurate)
+      await fetchQuestions();
+
+      // Option B (Alternate): Optimistically add to state without refetching:
+      // setQuestions((prev) => [newQuestion, ...prev]);
+
+      // Clear form inputs after successful submission
+      setNewTitle("");
+      setNewDescription("");
+      setNewCompany("");
+      setNewType("");
+
+    } catch (error) {
+      console.error("Error adding question:", error);
+      alert("Failed to add question. Check console for details.");
+    }
+  };
+
+  // Handle the initial load of questions
+  useEffect(() => {
+    setLoading(true);
     getQuestions().then((data) => {
       setQuestions(data);
       setLoading(false);
@@ -20,8 +90,41 @@ const QuestionsPage = () => {
   return (
     <div>
       <h2>Interview Questions</h2>
+
+      <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+        <input 
+          type="text" 
+          placeholder="Question Title" 
+          value={newTitle} 
+          onChange={(e) => setNewTitle(e.target.value)} 
+          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+        />
+        <input 
+          type="text" 
+          placeholder="Company (optional)" 
+          value={newCompany} 
+          onChange={(e) => setNewCompany(e.target.value)} 
+          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+        />
+        <input 
+          type="text" 
+          placeholder="Type (e.g. product design, improvement)" 
+          value={newType} 
+          onChange={(e) => setNewType(e.target.value)}
+          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+        />
+        <textarea 
+          placeholder="Question Description" 
+          value={newDescription} 
+          onChange={(e) => setNewDescription(e.target.value)} 
+          rows="3"
+          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+        />
+        <button type="submit">Add Question</button>
+      </form>
+
       {questions.length === 0 ? (
-        <p>No questions available.</p>
+        <p>No questions yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {questions.map((q) => {

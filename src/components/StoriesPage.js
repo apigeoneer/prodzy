@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getStories } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime'; // if using relative times
+import { collection, addDoc} from 'firebase/firestore';
+import { db } from '../firebase';
+
 
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);
@@ -9,6 +12,7 @@ const StoriesPage = () => {
   const [newStoryTitle, setNewStoryTitle] = useState("");
   const [newStoryContent, setNewStoryContent] = useState("");
 
+  // Handle the initial load of stories
   useEffect(() => {
     setLoading(true);
     getStories().then((data) => {
@@ -22,6 +26,33 @@ const StoriesPage = () => {
       setLoading(false);
     });
   }, []);
+
+
+  // Store story data in Firestore so that it persists
+  const handleSubmitStory = async (e) => {
+    e.preventDefault();
+    if (!newStoryTitle.trim() || !newStoryContent.trim()) return;
+  
+    const newStory = {
+      title: newStoryTitle.trim(),
+      content: newStoryContent.trim(),
+      postedBy: "currentUser",
+      postedAt: new Date(),
+      likes: 0,
+      comments: [],
+      likedByUser: false
+    };
+  
+    await addDoc(collection(db, "stories"), newStory);
+  
+    // Re-fetch stories
+    const updatedStories = await getStories();
+    setStories(updatedStories);
+  
+    setNewStoryTitle("");
+    setNewStoryContent("");
+    setShowStoryForm(false);
+  };
 
   const handleShareStory = (e) => {
     e.preventDefault();
