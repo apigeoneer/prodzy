@@ -4,7 +4,7 @@ import { getAnswersForQuestion } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
-import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs, arrayRemove, increment, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 
@@ -20,23 +20,32 @@ const QuestionAnswersPage = () => {
   // Initialize local state with the filtered and sorted answers
   const [answers, setAnswers] = useState([]);
 
-  const handleLike = async (answerId, currentLikes, currentlyLikedByUser) => {
+  const handleLike = async (answerId, currentlyLikedByUser) => {
     const answerDocRef = doc(db, "answers", answerId);
-    const newLikesCount = currentlyLikedByUser ? currentLikes - 1 : currentLikes + 1;
   
-    await updateDoc(answerDocRef, {
-      likes: newLikesCount
-    });
+    try {
+      if (currentlyLikedByUser) {
+        // Unlike the answer
+        await updateDoc(answerDocRef, {
+          likes: increment(-1),
+          likedBy: arrayRemove("currentUserId"), // Replace with actual user ID
+        });
+      } else {
+        // Like the answer
+        await updateDoc(answerDocRef, {
+          likes: increment(1),
+          likedBy: arrayUnion("currentUserId"), // Replace with actual user ID
+        });
+      }
   
-    // Option A: Re-fetch data
-    const updatedAnswers = await getAnswersForQuestion(questionId);
-    setAnswers(updatedAnswers);
-  
-    // Option B: Optimistic update
-    // setAnswers(prev => prev.map(a =>
-    //   a.id === answerId ? { ...a, likes: newLikesCount, likedByUser: !currentlyLikedByUser } : a
-    // ));
+      // Re-fetch answers to update UI
+      const updatedAnswers = await getAnswersForQuestion(questionId);
+      setAnswers(updatedAnswers);
+    } catch (error) {
+      console.error("Error updating likes:", error);
+    }
   };
+  
   
   const [commentInputs, setCommentInputs] = useState({}); 
     // commentInputs will be an object like { [index]: "comment text" }
@@ -48,18 +57,23 @@ const QuestionAnswersPage = () => {
   const handleAddComment = async (answerId, commentText) => {
     const answerDocRef = doc(db, "answers", answerId);
   
-    await updateDoc(answerDocRef, {
-      comments: arrayUnion({
-        text: commentText.trim(),
-        postedBy: "currentUser",
-        postedAt: new Date()
-      })
-    });
+    try {
+      await updateDoc(answerDocRef, {
+        comments: arrayUnion({
+          text: commentText.trim(),
+          postedBy: "currentUserId", // Replace with actual user ID
+          postedAt: Timestamp.fromDate(new Date()),
+        }),
+      });
   
-    // After updating, re-fetch answers so the UI updates
-    const updatedAnswers = await getAnswersForQuestion(questionId);
-    setAnswers(updatedAnswers);
+      // Re-fetch answers to update UI
+      const updatedAnswers = await getAnswersForQuestion(questionId);
+      setAnswers(updatedAnswers);
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
+  
 
 const handleCommentSubmit = async (index, e) => {
   e.preventDefault();
@@ -223,8 +237,8 @@ const toggleComments = (index) => {
       <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-      <button className="form-button" onClick={() => handleLike(answer.id, answer.likes, answer.likedByUser)}>
-        <FontAwesomeIcon icon={faThumbsUp} color={answer.likedByUser ? "blue" : "inherit"} />
+        <button className="form-button" onClick={() => handleLike(answer.id, answer.likedByUser)}>
+          <FontAwesomeIcon icon={faThumbsUp} color={answer.likedByUser ? "blue" : "inherit"} />
         </button>
         <button className="form-button" onClick={() => toggleComments(index)}>
             <FontAwesomeIcon icon={faComment} />
@@ -252,7 +266,7 @@ const toggleComments = (index) => {
           )}
 
           {/* Comment form */}
-          <form onSubmit={(e) => handleCommentSubmit(index, e)} style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {/* <form onSubmit={(e) => handleCommentSubmit(index, e)}>
             <input
               className="form-input"
               type="text"
@@ -261,7 +275,24 @@ const toggleComments = (index) => {
               onChange={(e) => handleCommentChange(index, e.target.value)}
             />
             <button className="form-button" type="submit">Submit Comment</button>
+          </form> */}
+          <form onSubmit={(e) => {
+              e.preventDefault();
+              const text = commentInputs[index]?.trim();
+              if (!text) return;
+
+              handleAddComment(answer.id, text);
+              setCommentInputs({ ...commentInputs, [index]: "" });
+            }} style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              value={commentInputs[index] || ""}
+              onChange={(e) => setCommentInputs({ ...commentInputs, [index]: e.target.value })}
+            />
+            <button type="submit" className="form-button">Submit</button>
           </form>
+
         </div>
       )}
     </li>
