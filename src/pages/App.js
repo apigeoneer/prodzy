@@ -11,7 +11,7 @@ import Login from '../components/Login';
 import Signup from '../components/SignUp';
 import QuestionDetailPage from '../components/QuestionDetailPage';
 import QuestionAnswersPage from '../components/QuestionAnswersPage';
-
+import Breadcrumbs from "../components/Breadcrumbs";
 
 
 const App = () => {
@@ -53,6 +53,8 @@ const App = () => {
             </button>
           </div>
         )}
+
+        <Breadcrumbs />
 
         <Routes>
           {/* checks if the user is logged in before rendering the login/signup pages */}
