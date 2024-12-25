@@ -5,7 +5,7 @@ import { timeAgo } from '../utils/formatTime';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
 import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs, arrayRemove, increment, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 
 
 const QuestionAnswersPage = () => {
@@ -45,7 +45,6 @@ const QuestionAnswersPage = () => {
       console.error("Error updating likes:", error);
     }
   };
-  
   
   const [commentInputs, setCommentInputs] = useState({}); 
     // commentInputs will be an object like { [index]: "comment text" }
@@ -125,6 +124,33 @@ const toggleComments = (index) => {
     // Clear the input
     setNewAnswerText("");
   };
+
+  const [editingAnswerId, setEditingAnswerId] = useState(null);
+const [editAnswerText, setEditAnswerText] = useState("");
+
+const startEditing = (answerId, currentText) => {
+  setEditingAnswerId(answerId);
+  setEditAnswerText(currentText);
+};
+
+const stopEditing = () => {
+  setEditingAnswerId(null);
+  setEditAnswerText("");
+};
+
+const handleUpdateAnswer = async (answerId, newText) => {
+  const answerDocRef = doc(db, "answers", answerId);
+  try {
+    await updateDoc(answerDocRef, {
+      text: newText
+    });
+    const updatedAnswers = await getAnswersForQuestion(questionId);
+    setAnswers(updatedAnswers);
+  } catch (error) {
+    console.error("Error updating answer:", error);
+  }
+};
+
 
   // Fetch questions from Firestore
   useEffect(() => {
@@ -246,6 +272,31 @@ const toggleComments = (index) => {
         <button className="form-button" onClick={() => handleShare(answer)}>
             <FontAwesomeIcon icon={faShare} />
         </button>
+
+        {editingAnswerId === answer.id ? (
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await handleUpdateAnswer(answer.id, editAnswerText);
+          stopEditing();
+        }}
+      >
+        <textarea
+          value={editAnswerText}
+          onChange={(e) => setEditAnswerText(e.target.value)}
+        />
+        <button type="submit">Save</button>
+        <button type="button" onClick={stopEditing}>Cancel</button>
+      </form>
+    ) : (
+      <div>
+        <p>{answer.text}</p>
+        {answer.postedBy === auth.currentUser?.uid && (
+          <button onClick={() => startEditing(answer.id, answer.text)}>Edit</button>
+        )}
+      </div>
+    )}
+
     </div>
 
       {/* Conditionally render comments & comment form */}
