@@ -29,9 +29,17 @@ const App = () => {
 
   return (
     <Router>
-      <header>
-        <h1>Prodzy - Crack The Toughest PM Interveiws</h1>
-      </header>
+<header>
+  {/* Single container with flex */}
+  <div className='site-header'>
+    <img
+      src="/logos/prodzy.svg"
+      alt="Prodzy Logo"
+      className='logo'
+    />
+    {/* <h1 style={{ marginLeft: '1rem' }}>Crack The Toughest PM Interviews</h1> */}
+  </div>
+</header>
 
       <NavBar user={user} onLogout={() => auth.signOut()} />
 

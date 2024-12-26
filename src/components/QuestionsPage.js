@@ -93,7 +93,7 @@ const QuestionsPage = () => {
 
   return (
     <div>
-      <h2>Interview Questions</h2>
+      <h2>PM Interview Questions</h2>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
         <input 

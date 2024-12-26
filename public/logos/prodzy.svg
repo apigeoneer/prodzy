@@ -1,0 +1,33 @@
+<!-- prodzy-logo.svg -->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="240"
+  height="80"
+  viewBox="0 0 240 80"
+>
+  <rect fill="#ffffff" width="240" height="80" />
+  <g transform="translate(40,40)">
+    <circle cx="0" cy="0" r="28" fill="#F74F57" />
+    <path
+      d="
+        M -8 -14
+        C -8 -14, -8 2, -8 14
+        L -2 14
+        C -2 8,  8 8,  8 0
+        C 8 -8, -2 -8, -2 -14
+        Z
+      "
+      fill="#ffffff"
+    />
+  </g>
+  <text
+    x="90"
+    y="47"
+    fill="#323232"
+    font-family="Arial, sans-serif"
+    font-size="34"
+    font-weight="600"
+  >
+    Prodzy
+  </text>
+</svg>
