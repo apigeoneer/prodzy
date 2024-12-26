@@ -134,6 +134,9 @@ const QuestionsPage = () => {
           {questions.map((q) => {
             // Format postedAt as a readable string
             const postedTime = q.postedAt.toLocaleString();
+            const companyLogoSrc = q.company
+            ? `/logos/${q.company.toLowerCase()}.svg`
+            : "/logos/default.svg";
             return (
               <li 
                 key={q.questionId} 
@@ -143,7 +146,17 @@ const QuestionsPage = () => {
                 <p>{q.description}</p>
                 <p>
                   <strong>Posted:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
-                  <strong>Type:</strong> {q.type}
+                  <strong>Type:</strong> {q.type}<br/>
+                  <div>
+                    <div><strong>Asked at:</strong></div>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <img
+                        src={companyLogoSrc}
+                        alt={q.company || "Unknown Company"}
+                        style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+                    />
+                    </div>
+                  </div>
                 </p>
                 <Link to={`/questions/${q.questionId}/answers`}>
                   <button className="form-button">View Answers</button>

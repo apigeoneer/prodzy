@@ -1,0 +1,7 @@
+<!-- tcs.svg -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#EF820D" width="200" height="200"/>
+  <text x="50%" y="50%" fill="#FFFFFF" font-size="40" font-family="Arial" dominant-baseline="middle" text-anchor="middle">
+    TCS
+  </text>
+</svg>

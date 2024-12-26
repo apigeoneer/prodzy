@@ -207,6 +207,10 @@ const handleUpdateAnswer = async (answerId, newText) => {
     return <p>Question not found.</p>;
   }
 
+  const companyLogoSrc = question.company
+  ? `/logos/${question.company.toLowerCase()}.svg`
+  : '/logos/default.svg';
+
   if (loading) {
     return <p>Loading answers...</p>;
   }
@@ -215,12 +219,21 @@ const handleUpdateAnswer = async (answerId, newText) => {
   // We'll add form controls next
   return (
     <div>
+      
       <h2>{question.title}</h2>
       <p>{question.description}</p>
-      <p>
+      <div>
         <strong>Posted:</strong> {question.postedAt.toLocaleString()} by {question.postedBy} at {question.company}<br/>
         <strong>Type:</strong> {question.type}
-      </p>
+        <div><strong>Asked at:</strong></div>
+        <div style={{ marginBottom: '0.5rem' }}>
+          <img
+            src={companyLogoSrc}
+            alt={question.company || "Unknown Company"}
+            style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+          />
+        </div>
+      </div>
 
     {/* Add the button to toggle the answer form */}
     <button className="form-button" onClick={() => setShowAnswerForm(!showAnswerForm)}>
