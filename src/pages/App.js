@@ -12,6 +12,8 @@ import Signup from '../components/SignUp';
 import QuestionDetailPage from '../components/QuestionDetailPage';
 import QuestionAnswersPage from '../components/QuestionAnswersPage';
 import Breadcrumbs from "../components/Breadcrumbs";
+import Footer from '../components/Footer';
+import TermsConditions from '../components/TermsConditions';
 
 
 const App = () => {
@@ -66,7 +68,10 @@ const App = () => {
           <Route path="/" element={<div>Home</div>} />
           <Route path="/questions/:id" element={<QuestionDetailPage />} /> 
           <Route path="/questions/:id/answers" element={<QuestionAnswersPage />} />
+          <Route path="/terms" element={<TermsConditions />} />
         </Routes>
+
+        <Footer />
       </div>
     </Router>
   );
