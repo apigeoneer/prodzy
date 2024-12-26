@@ -11,12 +11,15 @@ const StoriesPage = () => {
   const [newStoryTitle, setNewStoryTitle] = useState("");
   const [newStoryContent, setNewStoryContent] = useState("");
 
+  const MIN_TITLE_LENGTH = 10;
+  const MAX_TITLE_LENGTH = 50;
+  const MIN_DESCRIPTION_LENGTH = 10;
+  const MAX_DESCRIPTION_LENGTH = 2000;
+
   // Character limit for story previews
   const STORY_PREVIEW_LIMIT = 200;
-
   // Track which stories are expanded
   const [expandedStories, setExpandedStories] = useState({}); // e.g. { storyId1: true, storyId2: false }
-
   // Toggle function for "Read More"/"Read Less"
   const toggleStoryExpand = (storyId) => {
     setExpandedStories((prev) => ({
@@ -64,6 +67,23 @@ const StoriesPage = () => {
     setNewStoryTitle("");
     setNewStoryContent("");
     setShowStoryForm(false);
+
+    if (newStoryTitle.length < MIN_TITLE_LENGTH) {
+      alert(`Story title must be at least ${MIN_TITLE_LENGTH} characters.`);
+      return;
+    }
+    if (newStoryTitle.length > MAX_TITLE_LENGTH) {
+      alert(`Story title cannot exceed ${MAX_TITLE_LENGTH} characters.`);
+      return;
+    }
+    if (newStoryContent.length < MIN_DESCRIPTION_LENGTH) {
+      alert(`Story title must be at least ${MIN_DESCRIPTION_LENGTH} characters.`);
+      return;
+    }
+    if (newStoryContent.length > MAX_DESCRIPTION_LENGTH) {
+      alert(`Story title cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.`);
+      return;
+    }
   };
 
   // Demo function that doesn't persist to Firestore (optional)
@@ -100,7 +120,7 @@ const StoriesPage = () => {
 
       {showStoryForm && (
         <form
-          onSubmit={handleShareStory}
+          onSubmit={handleSubmitStory}
           style={{
             display: "flex",
             flexDirection: "column",
