@@ -1,20 +1,20 @@
-// src/components/QuestionsPage.js
 import React, { useState, useEffect } from 'react';
-import { getQuestions } from '../services/dataService';
 import { Link } from 'react-router-dom';
+import { db, auth } from '../firebase';
+import { doc, getDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { getQuestions } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime';
-import { db } from '../firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+
 
 const QuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState("Anonymous");
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newCompany, setNewCompany] = useState("");
   const [newType, setNewType] = useState("");
-
   const QUESTION_TYPES = [
     "Product Design",
     "Product Improvement",
@@ -24,9 +24,28 @@ const QuestionsPage = () => {
     "Metrics"
   ];
   
-
   useEffect(() => {
-    // Initially fetch questions on mount
+    // Check if current user is admin
+    const fetchIsAdmin = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return; // not logged in
+      const profileRef = doc(db, "profiles", currentUser.uid);
+      const profileSnap = await getDoc(profileRef);
+      if (profileSnap.exists()) {
+        const profileData = profileSnap.data();
+        // If user has a name field, set it
+        if (profileData.name) {
+          setUserName(profileData.name);
+        }
+        // If user is admin, set isAdmin
+        if (profileData.isAdmin) {
+          setIsAdmin(true);
+        }
+      }
+    };
+
+    fetchIsAdmin();
+    // Also fetch questions
     fetchQuestions();
   }, []);
 
@@ -41,12 +60,17 @@ const QuestionsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Double-check on submit if user is not admin
+      if (!isAdmin) {
+        alert("Only admins can add new questions.");
+        return;
+      }
+
     // Basic validation
     if (!newTitle.trim() || !newDescription.trim() || !newCompany.trim() || !newType) {
       alert("Please provide all title, description, company and type.");
       return;
     }
-    
 
     // Create the new question object
     const newQuestion = {
@@ -54,7 +78,7 @@ const QuestionsPage = () => {
       description: newDescription.trim(),
       // postedAt: new Date(),
       postedAt: Timestamp.fromDate(new Date()), // Firebase expcets Timestamp objects for dates
-      postedBy: "Anonymous",
+      postedBy: userName || "Anonymous",
       likes: 0,
       company: newCompany.trim() || "",
       type: newType.trim() || "",
@@ -64,17 +88,10 @@ const QuestionsPage = () => {
     console.log("New Question Object:", newQuestion);
 
     try {
-      // 1. Add the new question to Firestore
+      // Add the new question to Firestore
       await addDoc(collection(db, "questions"), newQuestion);
-
-      // 2. Re-fetch or Optimistically Update State
-
-      // Option A: Re-Fetch Questions (simpler, ensures data is always accurate)
+      // Re-fetch
       await fetchQuestions();
-
-      // Option B (Alternate): Optimistically add to state without refetching:
-      // setQuestions((prev) => [newQuestion, ...prev]);
-
       // Clear form inputs after successful submission
       setNewTitle("");
       setNewDescription("");
@@ -104,44 +121,50 @@ const QuestionsPage = () => {
     <div>
       <h2>PM Interview Questions</h2>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-        <input 
-          type="text" 
-          placeholder="Question Title" 
-          value={newTitle} 
-          onChange={(e) => setNewTitle(e.target.value)} 
-          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
-        />
-        <input 
-          type="text" 
-          placeholder="Company (optional)" 
-          value={newCompany} 
-          onChange={(e) => setNewCompany(e.target.value)} 
-          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
-        />
-        {/* <label htmlFor="questionType">Type</label> */}
-        <select
-          id="questionType"
-          value={newType}
-          onChange={(e) => setNewType(e.target.value)}
-          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }}
-        >
-        <option value="">-- Select Type --</option>
-          {QUESTION_TYPES.map((option) => (
-          <option key={option} value={option}>
-          {option}
-        </option>
-        ))}
-        </select>
-        <textarea 
-          placeholder="Question Description" 
-          value={newDescription} 
-          onChange={(e) => setNewDescription(e.target.value)} 
-          rows="3"
-          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
-        />
-        <button type="submit">Add Question</button>
-      </form>
+      {/* Show or Hide the form based on isAdmin */}
+      {isAdmin ? (
+        <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+          <input 
+            type="text" 
+            placeholder="Question Title" 
+            value={newTitle} 
+            onChange={(e) => setNewTitle(e.target.value)} 
+            style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+          />
+          <input 
+            type="text" 
+            placeholder="Company (optional)" 
+            value={newCompany} 
+            onChange={(e) => setNewCompany(e.target.value)} 
+            style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+          />
+          <select
+            id="questionType"
+            value={newType}
+            onChange={(e) => setNewType(e.target.value)}
+            style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }}
+          >
+            <option value="">-- Select Type --</option>
+            {QUESTION_TYPES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <textarea 
+            placeholder="Question Description" 
+            value={newDescription} 
+            onChange={(e) => setNewDescription(e.target.value)} 
+            rows="3"
+            style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
+          />
+          <button type="submit">Add Question</button>
+        </form>
+      ) : (
+        <p style={{ color: '#888' }}>
+          Only admins can add new questions.
+        </p>
+      )}
 
       {questions.length === 0 ? (
         <p>No questions yet.</p>
@@ -161,10 +184,10 @@ const QuestionsPage = () => {
                 <h3>{q.title}</h3>
                 <p>{q.description}</p>
                 <p>
-                  <strong>Posted:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
-                  <strong>Type:</strong> {q.type}<br/>
+                  <strong>Posted By:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
+                  <strong> Question Type:</strong> {q.type}<br/>
                   <div>
-                    <div><strong>Asked at:</strong></div>
+                    <div><strong>Asked At:</strong></div>
                     <div style={{ marginBottom: '0.5rem' }}>
                       <img
                         src={companyLogoSrc}
