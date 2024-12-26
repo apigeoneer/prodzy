@@ -20,6 +20,15 @@ const QuestionAnswersPage = () => {
   // Initialize local state with the filtered and sorted answers
   const [answers, setAnswers] = useState([]);
 
+  const ANSWER_PREVIEW_LIMIT = 200;
+  const [expandedAnswers, setExpandedAnswers] = useState({});
+  const toggleAnswerExpand = (answerId) => {
+    setExpandedAnswers((prev) => ({
+      ...prev,
+      [answerId]: !prev[answerId],
+    }));
+  };
+
   const handleLike = async (answerId, currentlyLikedByUser) => {
     const answerDocRef = doc(db, "answers", answerId);
   
@@ -125,7 +134,7 @@ const toggleComments = (index) => {
     setNewAnswerText("");
   };
 
-  const [editingAnswerId, setEditingAnswerId] = useState(null);
+const [editingAnswerId, setEditingAnswerId] = useState(null);
 const [editAnswerText, setEditAnswerText] = useState("");
 
 const startEditing = (answerId, currentText) => {
@@ -268,12 +277,34 @@ const handleUpdateAnswer = async (answerId, newText) => {
 <ul style={{ listStyle: 'none', padding: 0 }}>
 {answers.map((answer, index) => {
   const isCommentsVisible = commentsVisibility[index] || false;
+  const isLong = answer.text.length > ANSWER_PREVIEW_LIMIT;
+  const expanded = expandedAnswers[answer.id];
+  const displayedContent =
+    isLong && !expanded
+      ? answer.text.substring(0, ANSWER_PREVIEW_LIMIT) + "…"
+      : answer.text;
+
   return (
     <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
-      <p>{answer.text}</p>
+      {/* <p>{answer.text}</p> */}
       <p><strong>Likes:</strong> {answer.likes}</p>
-      {/* <p><strong>By:</strong> {answer.postedBy} on {answer.postedAt.toLocaleString()}</p> */}
       <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
+
+      <p>{displayedContent}</p>
+
+                {isLong && (
+                  <button
+                    onClick={() => toggleAnswerExpand(answer.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#800020",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {expanded ? "Read Less" : "Read More"}
+                  </button>
+                )}
 
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
         <button className="form-button" onClick={() => handleLike(answer.id, answer.likedByUser)}>
@@ -302,12 +333,11 @@ const handleUpdateAnswer = async (answerId, newText) => {
         <button type="button" onClick={stopEditing}>Cancel</button>
       </form>
     ) : (
-      <div>
-        <p>{answer.text}</p>
-        {answer.postedBy === auth.currentUser?.uid && (
-          <button onClick={() => startEditing(answer.id, answer.text)}>Edit</button>
-        )}
-      </div>
+      answer.postedBy === auth.currentUser?.uid && (
+        <button onClick={() => startEditing(answer.id, answer.text)}>
+          Edit
+        </button>
+      )
     )}
 
     </div>
