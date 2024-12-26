@@ -3,6 +3,13 @@ import { getStories } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime'; // if using relative times
 import { collection, addDoc} from 'firebase/firestore';
 import { db } from '../firebase';
+import {
+  MIN_TITLE_LENGTH,
+  MAX_TITLE_LENGTH,
+  MIN_DESCRIPTION_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  STORY_PREVIEW_LIMIT
+} from '../utils/constants';
 
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);
@@ -11,13 +18,6 @@ const StoriesPage = () => {
   const [newStoryTitle, setNewStoryTitle] = useState("");
   const [newStoryContent, setNewStoryContent] = useState("");
 
-  const MIN_TITLE_LENGTH = 10;
-  const MAX_TITLE_LENGTH = 50;
-  const MIN_DESCRIPTION_LENGTH = 10;
-  const MAX_DESCRIPTION_LENGTH = 2000;
-
-  // Character limit for story previews
-  const STORY_PREVIEW_LIMIT = 200;
   // Track which stories are expanded
   const [expandedStories, setExpandedStories] = useState({}); // e.g. { storyId1: true, storyId2: false }
   // Toggle function for "Read More"/"Read Less"
