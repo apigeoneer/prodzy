@@ -15,6 +15,16 @@ const QuestionsPage = () => {
   const [newCompany, setNewCompany] = useState("");
   const [newType, setNewType] = useState("");
 
+  const QUESTION_TYPES = [
+    "Product Design",
+    "Product Improvement",
+    "Behavioral",
+    "Strategy",
+    "Guesstimate",
+    "Metrics"
+  ];
+  
+
   useEffect(() => {
     // Initially fetch questions on mount
     fetchQuestions();
@@ -32,7 +42,7 @@ const QuestionsPage = () => {
     e.preventDefault();
 
     // Basic validation
-    if (!newTitle.trim() || !newDescription.trim() || !newCompany.trim() || !newType.trim()) {
+    if (!newTitle.trim() || !newDescription.trim() || !newCompany.trim() || !newType) {
       alert("Please provide all title, description, company and type.");
       return;
     }
@@ -90,7 +100,6 @@ const QuestionsPage = () => {
 
   console.log("Questions array:", questions);
 
-
   return (
     <div>
       <h2>PM Interview Questions</h2>
@@ -110,13 +119,20 @@ const QuestionsPage = () => {
           onChange={(e) => setNewCompany(e.target.value)} 
           style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
         />
-        <input 
-          type="text" 
-          placeholder="Type (e.g. product design, improvement)" 
-          value={newType} 
+        {/* <label htmlFor="questionType">Type</label> */}
+        <select
+          id="questionType"
+          value={newType}
           onChange={(e) => setNewType(e.target.value)}
-          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }} 
-        />
+          style={{ display: 'block', marginBottom: '0.5rem', width: '300px' }}
+        >
+        <option value="">-- Select Type --</option>
+          {QUESTION_TYPES.map((option) => (
+          <option key={option} value={option}>
+          {option}
+        </option>
+        ))}
+        </select>
         <textarea 
           placeholder="Question Description" 
           value={newDescription} 
