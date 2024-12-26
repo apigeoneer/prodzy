@@ -56,7 +56,7 @@ const App = () => {
           </div>
         )}
 
-        <Breadcrumbs />
+        {/* <Breadcrumbs /> */}
 
         <Routes>
           {/* checks if the user is logged in before rendering the login/signup pages */}
