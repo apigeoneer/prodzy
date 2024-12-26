@@ -4,7 +4,6 @@ import { timeAgo } from '../utils/formatTime'; // if using relative times
 import { collection, addDoc} from 'firebase/firestore';
 import { db } from '../firebase';
 
-
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,27 +11,40 @@ const StoriesPage = () => {
   const [newStoryTitle, setNewStoryTitle] = useState("");
   const [newStoryContent, setNewStoryContent] = useState("");
 
-  // Handle the initial load of stories
+  // Character limit for story previews
+  const STORY_PREVIEW_LIMIT = 200;
+
+  // Track which stories are expanded
+  const [expandedStories, setExpandedStories] = useState({}); // e.g. { storyId1: true, storyId2: false }
+
+  // Toggle function for "Read More"/"Read Less"
+  const toggleStoryExpand = (storyId) => {
+    setExpandedStories((prev) => ({
+      ...prev,
+      [storyId]: !prev[storyId],
+    }));
+  };
+
+  // Fetch stories on mount
   useEffect(() => {
     setLoading(true);
     getStories().then((data) => {
       // Add any default fields if needed
-      const processed = data.map(story => ({
+      const processed = data.map((story) => ({
         ...story,
         comments: story.comments || [],
-        likedByUser: story.likedByUser || false
+        likedByUser: story.likedByUser || false,
       }));
       setStories(processed);
       setLoading(false);
     });
   }, []);
 
-
-  // Store story data in Firestore so that it persists
+  // Add a new story to Firestore
   const handleSubmitStory = async (e) => {
     e.preventDefault();
     if (!newStoryTitle.trim() || !newStoryContent.trim()) return;
-  
+
     const newStory = {
       title: newStoryTitle.trim(),
       content: newStoryContent.trim(),
@@ -40,20 +52,21 @@ const StoriesPage = () => {
       postedAt: new Date(),
       likes: 0,
       comments: [],
-      likedByUser: false
+      likedByUser: false,
     };
-  
+
     await addDoc(collection(db, "stories"), newStory);
-  
+
     // Re-fetch stories
     const updatedStories = await getStories();
     setStories(updatedStories);
-  
+
     setNewStoryTitle("");
     setNewStoryContent("");
     setShowStoryForm(false);
   };
 
+  // Demo function that doesn't persist to Firestore (optional)
   const handleShareStory = (e) => {
     e.preventDefault();
     if (!newStoryTitle.trim() || !newStoryContent.trim()) return;
@@ -66,9 +79,10 @@ const StoriesPage = () => {
       postedAt: new Date(),
       likes: 0,
       comments: [],
-      likedByUser: false
+      likedByUser: false,
     };
 
+    // This only updates local state, not Firestore
     setStories([newStory, ...stories]);
     setNewStoryTitle("");
     setNewStoryContent("");
@@ -85,16 +99,22 @@ const StoriesPage = () => {
       </button>
 
       {showStoryForm && (
-        <form 
-          onSubmit={handleShareStory} 
-          style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', margin: '1rem 0' }}
+        <form
+          onSubmit={handleShareStory}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            maxWidth: "500px",
+            margin: "1rem 0",
+          }}
         >
-          <input 
-            className="form-input" 
-            type="text" 
-            placeholder="Story title..." 
-            value={newStoryTitle} 
-            onChange={(e) => setNewStoryTitle(e.target.value)} 
+          <input
+            className="form-input"
+            type="text"
+            placeholder="Story title..."
+            value={newStoryTitle}
+            onChange={(e) => setNewStoryTitle(e.target.value)}
           />
           <textarea
             className="form-input"
@@ -103,27 +123,61 @@ const StoriesPage = () => {
             value={newStoryContent}
             onChange={(e) => setNewStoryContent(e.target.value)}
           />
-          <button type="submit" className="form-button">Submit Story</button>
+          <button type="submit" className="form-button">
+            Submit Story
+          </button>
         </form>
       )}
 
       {stories.length === 0 ? (
         <p>No stories yet. Be the first to share one!</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {stories.map((story, index) => (
-            <li 
-              key={story.id} 
-              style={{ border: '1px solid #ddd', marginBottom: '1rem', padding: '1rem', borderRadius: '4px' }}
-            >
-              <h3>{story.title}</h3>
-              <p>{story.content}</p>
-              <p><strong>By:</strong> {story.postedBy} {timeAgo(story.postedAt)}</p>
-              <p><strong>Likes:</strong> {story.likes}</p>
-              {/* Add Like, Comment, and Share icons similar to AnswersPage later */}
-              {/* Show comments if needed, but this is optional for MVP */}
-            </li>
-          ))}
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {stories.map((story) => {
+            // Check if the story is longer than the limit
+            const isLong = story.content.length > STORY_PREVIEW_LIMIT;
+            // Check if it's expanded based on story's ID
+            const expanded = expandedStories[story.id];
+            // If it's long and not expanded, show partial content
+            const displayedContent =
+              isLong && !expanded
+                ? story.content.substring(0, STORY_PREVIEW_LIMIT) + "…"
+                : story.content;
+
+            return (
+              <li
+                key={story.id}
+                style={{
+                  border: "1px solid #ddd",
+                  marginBottom: "1rem",
+                  padding: "1rem",
+                  borderRadius: "4px",
+                }}
+              >
+                <h3>{story.title}</h3>
+                <p>{displayedContent}</p>
+                <p>
+                  <strong>By:</strong> {story.postedBy} {timeAgo(story.postedAt)}
+                </p>
+                <p>
+                  <strong>Likes:</strong> {story.likes}
+                </p>
+                {isLong && (
+                  <button
+                    onClick={() => toggleStoryExpand(story.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#800020",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {expanded ? "Read Less" : "Read More"}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -131,4 +185,3 @@ const StoriesPage = () => {
 };
 
 export default StoriesPage;
-
