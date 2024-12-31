@@ -177,26 +177,23 @@ const QuestionsPage = () => {
             ? `/logos/${q.company.toLowerCase()}.svg`
             : "/logos/default.svg";
             return (
-              <li 
-                key={q.questionId} 
-                style={{ border: '1px solid #ccc', marginBottom: '1rem', padding: '1rem', borderRadius: '4px' }}
-              >
-                <h3>{q.title}</h3>
-                <p>{q.description}</p>
-                <p>
-                  <strong>Posted By:</strong> {q.postedBy} {timeAgo(q.postedAt)} at {q.company}<br/>
-                  <strong> Question Type:</strong> {q.type}<br/>
-                  <div>
+              <li key={q.questionId} className='question-card'>
+                <div className='question-header'>
+                  <h3 className='question-title'>{q.title}</h3>
+                  <p>{q.description}</p>
+                </div>
+                <div className='question-metadata'>
+                  <div><strong>Posted By:</strong> {q.postedBy}, {timeAgo(q.postedAt)} </div>
+                  <div><strong> Question Type:</strong> {q.type} </div>
                     <div><strong>Asked At:</strong></div>
-                    <div style={{ marginBottom: '0.5rem' }}>
+                    <div className='logo-container'>
                       <img
                         src={companyLogoSrc}
                         alt={q.company || "Unknown Company"}
-                        style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+                        className='logo'
                     />
-                    </div>
                   </div>
-                </p>
+                </div>
                 <Link to={`/questions/${q.questionId}/answers`}>
                   <button className="form-button">View Answers</button>
                 </Link>

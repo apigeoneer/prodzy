@@ -15,12 +15,22 @@ export async function getQuestions() {
 
 // Similarly, for answers:
 export async function getAnswersForQuestion(questionId) {
-  const aCol = collection(db, "answers");
-  const q = query(aCol, where("questionId", "==", questionId), orderBy("likes", "desc"));
-  const aSnapshot = await getDocs(q);
-  const answers = aSnapshot.docs.map(doc => doc.data());
-  return answers;
-}
+  const answersRef = collection(db, "answers");
+  const q = query(answersRef, where("questionId", "==", questionId));
+  // const querySnapshot = await getDocs(q);
+  // // const answers = querySnapshot.docs.map(doc => doc.data());
+  // return querySnapshot.docs;
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    }));
+  } catch (error) {
+    console.error("Error fetching answers:", error);
+    return [];
+  }
+};
 
 // For stories:
 export async function getStories() {

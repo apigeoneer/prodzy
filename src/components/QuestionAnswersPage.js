@@ -29,31 +29,97 @@ const QuestionAnswersPage = () => {
     }));
   };
 
-  const handleLike = async (answerId, currentlyLikedByUser) => {
-    const answerDocRef = doc(db, "answers", answerId);
+  // const handleLike = async (answerId, currentlyLikedByUser) => {
+  //   if (!answerId) {
+  //     console.error("Invalid answer ID");
+  //     return;
+  //   }
   
-    try {
-      if (currentlyLikedByUser) {
-        // Unlike the answer
-        await updateDoc(answerDocRef, {
-          likes: increment(-1),
-          likedBy: arrayRemove("currentUserId"), // Replace with actual user ID
-        });
-      } else {
-        // Like the answer
-        await updateDoc(answerDocRef, {
-          likes: increment(1),
-          likedBy: arrayUnion("currentUserId"), // Replace with actual user ID
-        });
-      }
+  //   try {
+  //     const answerRef = doc(db, "answers", answerId.toString());
+  //     const answerDoc = await getDoc(answerRef);
   
-      // Re-fetch answers to update UI
-      const updatedAnswers = await getAnswersForQuestion(questionId);
-      setAnswers(updatedAnswers);
-    } catch (error) {
-      console.error("Error updating likes:", error);
+  //     if (!answerDoc.exists()) {
+  //       console.error("Answer document not found");
+  //       return;
+  //     }
+  
+  //     if (!auth.currentUser) {
+  //       console.error("User not authenticated");
+  //       return;
+  //     }
+  
+  //     await updateDoc(answerRef, {
+  //       likes: increment(currentlyLikedByUser ? -1 : 1),
+  //       likedBy: currentlyLikedByUser 
+  //         ? arrayRemove(auth.currentUser.uid)
+  //         : arrayUnion(auth.currentUser.uid)
+  //     });
+  
+  //     // Update local state
+  //     setAnswers(prev => prev.map(answer => {
+  //       if (answer.id === answerId) {
+  //         return {
+  //           ...answer,
+  //           likes: currentlyLikedByUser ? answer.likes - 1 : answer.likes + 1,
+  //           likedByUser: !currentlyLikedByUser
+  //         };
+  //       }
+  //       return answer;
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error updating likes:", error);
+  //   }
+  // };
+
+  // In QuestionAnswersPage.js, modify the handleLike function:
+const handleLike = async (answerId, currentlyLikedByUser) => {
+  console.log("Like button clicked:", { answerId, currentlyLikedByUser });
+
+  if (!answerId || !auth.currentUser) {
+    console.log("Missing answerId or user not authenticated:", { answerId, currentUser: auth.currentUser });
+    alert("Please log in to like answers");
+    return;
+  }
+
+  try {
+    const answerRef = doc(db, "answers", answerId);
+    console.log("Answer reference:", answerRef);
+
+    const answerDoc = await getDoc(answerRef);
+    console.log("Answer document:", answerDoc.data());
+
+    if (!answerDoc.exists()) {
+      console.log("Answer document not found:", answerId);
+      return;
     }
-  };
+
+    const currentData = answerDoc.data();
+    const likedBy = currentData.likedBy || [];
+    const likes = currentData.likes || 0;
+
+    await updateDoc(answerRef, {
+      likes: currentlyLikedByUser ? likes - 1 : likes + 1,
+      likedBy: currentlyLikedByUser 
+        ? arrayRemove(auth.currentUser.uid)
+        : arrayUnion(auth.currentUser.uid)
+    });
+
+    setAnswers(prev => prev.map(answer => {
+      if (answer.id === answerId) {
+        return {
+          ...answer,
+          likes: currentlyLikedByUser ? answer.likes - 1 : answer.likes + 1,
+          likedByUser: !currentlyLikedByUser
+        };
+      }
+      return answer;
+    }));
+
+  } catch (error) {
+    console.error("Error updating likes:", error);
+  }
+};
   
   const [commentInputs, setCommentInputs] = useState({}); 
     // commentInputs will be an object like { [index]: "comment text" }
@@ -69,7 +135,7 @@ const QuestionAnswersPage = () => {
       await updateDoc(answerDocRef, {
         comments: arrayUnion({
           text: commentText.trim(),
-          postedBy: "currentUserId", // Replace with actual user ID
+          postedBy: auth.currentUser.uid,
           postedAt: Timestamp.fromDate(new Date()),
         }),
       });
@@ -180,13 +246,11 @@ const handleUpdateAnswer = async (answerId, newText) => {
   useEffect(() => {
     setLoading(true);
     getAnswersForQuestion(questionId).then((data) => {
-      const processedAnswers = data
-        .sort((a, b) => b.likes - a.likes)
-        .map((answer) => ({
-          ...answer,
-          comments: answer.comments || [],
-          likedByUser: answer.likedByUser || false   // Allow a user to only like an answer once
-        }));
+      const processedAnswers = data.map(answer => ({
+        ...answer,
+        likedByUser: answer.likedBy?.includes(auth.currentUser?.uid) || false,
+        comments: answer.comments || []
+      })).sort((a, b) => b.likes - a.likes);
   
       setAnswers(processedAnswers);
       setLoading(false);
@@ -197,12 +261,12 @@ const handleUpdateAnswer = async (answerId, newText) => {
   // Fetch the question using a query by questionId field instead of document ID to eliminate any mismatch between questionId and Firestore Document ID
   useEffect(() => {
     const fetchQuestion = async () => {
-      const qRef = collection(db, "questions");
-      const qQuery = query(qRef, where("questionId", "==", questionId));
-      const qSnap = await getDocs(qQuery);
+      const answersRef = collection(db, "questions");
+      const qQuery = query(answersRef, where("questionId", "==", questionId));
+      const querySnapshot = await getDocs(qQuery);
   
-      if (!qSnap.empty) {
-        setQuestion(qSnap.docs[0].data());
+      if (!querySnapshot.empty) {
+        setQuestion(querySnapshot.docs[0].data());
       } else {
         setQuestion(null);
       }
@@ -229,20 +293,27 @@ const handleUpdateAnswer = async (answerId, newText) => {
   return (
     <div>
       
-      <h2>{question.title}</h2>
-      <p>{question.description}</p>
-      <div>
-        <strong>Posted:</strong> {question.postedAt.toLocaleString()} by {question.postedBy} at {question.company}<br/>
-        <strong>Type:</strong> {question.type}
-        <div><strong>Asked at:</strong></div>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <img
-            src={companyLogoSrc}
-            alt={question.company || "Unknown Company"}
-            style={{ width: '50px', height: '50px', objectFit: 'contain' }}
-          />
+    <div className='question-detail'>
+      <div className='question-detail-header'>
+        <div><h3>{question.title}</h3></div>
+        <div>{question.description}</div>
+      </div>
+      <div className='question-metadata'>
+        <div><strong>Posted:</strong> {question.postedAt.toLocaleString()}</div>
+        <div><strong>Posted By:</strong> {question.postedBy} at {question.company}</div>
+        <div><strong>Question Type:</strong> {question.type}</div>
+        <div>
+          <strong>Asked at:</strong>
+          <div className='question-metadata-company'>
+            <img
+             src={companyLogoSrc}
+             alt={question.company || "Unknown Company"}
+             style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+            />
+          </div>
         </div>
       </div>
+    </div>
 
     {/* Add the button to toggle the answer form */}
     <button className="form-button" onClick={() => setShowAnswerForm(!showAnswerForm)}>
@@ -352,7 +423,7 @@ const handleUpdateAnswer = async (answerId, newText) => {
                 {answer.comments.map((c, cIndex) => (
                   <li key={cIndex} style={{ border: '1px solid #eee', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '4px' }}>
                     <p>{c.text}</p>
-                    <p><em>by {c.postedBy} on {c.postedAt.toLocaleString()}</em></p>
+                    <p><em>by {c.postedBy} on {c.postedAt.toDate().toLocaleString()}</em></p>
                   </li>
                 ))}
               </ul>
@@ -370,7 +441,16 @@ const handleUpdateAnswer = async (answerId, newText) => {
             />
             <button className="form-button" type="submit">Submit Comment</button>
           </form> */}
-          <form onSubmit={(e) => {
+          <form onSubmit={(e) => handleCommentSubmit(index, e)}>
+            <input
+              type="text"
+              value={commentInputs[index] || ""}
+              onChange={(e) => handleCommentChange(index, e.target.value)}
+            />
+            <button type="submit">Submit</button>
+          </form>
+
+          {/* <form onSubmit={(e) => {
               e.preventDefault();
               const text = commentInputs[index]?.trim();
               if (!text) return;
@@ -385,7 +465,7 @@ const handleUpdateAnswer = async (answerId, newText) => {
               onChange={(e) => setCommentInputs({ ...commentInputs, [index]: e.target.value })}
             />
             <button type="submit" className="form-button">Submit</button>
-          </form>
+          </form> */}
 
         </div>
       )}

@@ -61,14 +61,14 @@ const ProfilePage = () => {
   if (loading) return <p>Loading profile...</p>;
 
   return (
-    <div>
-      <h1>Your Profile</h1>
+    <div className='profile-container'>
+      <h1 className='profile-header'>Your Profile</h1>
       <button onClick={() => setIsEditing(!isEditing)} style={{marginBottom: 10, marginTop: 20}}>
         {isEditing ? "Cancel" : "Edit Profile"}
       </button>
 
       {!isEditing ? (
-        <div>
+        <div className='profile-content'>
           <p>Name: {profile?.name || "N/A"}</p>
           <p>Job Role: {profile?.jobRole || "N/A"}</p>
           <p>Company: {profile?.company || "N/A"}</p>
