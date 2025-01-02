@@ -10,6 +10,8 @@ import {
   MAX_DESCRIPTION_LENGTH,
   STORY_PREVIEW_LIMIT
 } from '../utils/constants';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);
@@ -184,7 +186,8 @@ const StoriesPage = () => {
                 }}
               >
                 <h3>{story.title}</h3>
-                <p>{displayedContent}</p>
+                {/* <p>{displayedContent}</p> */}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedContent}</ReactMarkdown>
                 <p>
                   <strong>By:</strong> {story.postedBy},  {timeAgo(story.postedAt)}
                 </p>
