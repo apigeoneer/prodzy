@@ -80,7 +80,8 @@ const App = () => {
           <Route path="/questions/:id/answers" element={<QuestionAnswersPage />} />
           <Route path="/terms" element={<TermsConditions />} />
         </Routes>
-
+      </div>
+      <div className='footer-container'>
         <Footer />
       </div>
     </Router>

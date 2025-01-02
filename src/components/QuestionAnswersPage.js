@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
 import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs, arrayRemove, increment, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
+import { serverTimestamp } from 'firebase/firestore';
 
 
 const QuestionAnswersPage = () => {
@@ -130,8 +131,22 @@ const handleLike = async (answerId, currentlyLikedByUser) => {
 
   const handleAddComment = async (answerId, commentText) => {
     const answerDocRef = doc(db, "answers", answerId);
+    console.log("Comment button clicked:", { answerId, commentText });
+
+    if (!auth.currentUser) {
+      alert("Please log in to comment");
+      return;
+    }
   
     try {
+      const answerRef = doc(db, "answers", answerId);
+      const answerDoc = await getDoc(answerRef);
+      
+      if (!answerDoc.exists()) {
+        console.log("Answer not found");
+        return;
+      }
+  
       await updateDoc(answerDocRef, {
         comments: arrayUnion({
           text: commentText.trim(),
@@ -142,7 +157,23 @@ const handleLike = async (answerId, currentlyLikedByUser) => {
   
       // Re-fetch answers to update UI
       const updatedAnswers = await getAnswersForQuestion(questionId);
-      setAnswers(updatedAnswers);
+
+      // setAnswers(updatedAnswers);
+
+          // Update local state
+    setAnswers(prev => prev.map(answer => {
+      if (answer.id === answerId) {
+        return {
+          ...answer,
+          comments: [...answer.comments || [], {
+            text: commentText,
+            postedBy: auth.currentUser.uid,
+            postedAt: new Date()
+          }]
+        };
+      }
+      return answer;
+    }));
     } catch (error) {
       console.error("Error adding comment:", error);
     }
@@ -293,7 +324,7 @@ const handleUpdateAnswer = async (answerId, newText) => {
   return (
     <div>
       
-    <div className='question-detail'>
+    {/* <div className='question-detail'>
       <div className='question-detail-header'>
         <div><h3>{question.title}</h3></div>
         <div>{question.description}</div>
@@ -313,7 +344,45 @@ const handleUpdateAnswer = async (answerId, newText) => {
           </div>
         </div>
       </div>
+    </div> */}
+
+<div
+  className="question-detail-container"
+>
+  <h3 style={{ marginBottom: "1rem", color: "#333" }}>{question.title}</h3>
+  <p style={{ marginBottom: "1.5rem", color: "#555" }}>{question.description}</p>
+  <div
+    className="question-metadata"
+  >
+    <p style={{ margin: "0", color: "#666" }}>
+      <strong>Posted:</strong>{" "}
+      {new Date(question.postedAt.toDate()).toLocaleString()}
+    </p>
+    <p style={{ margin: "0", color: "#666" }}>
+      <strong>Posted By:</strong> {question.postedBy}
+    </p>
+    <p style={{ margin: "0", color: "#666" }}>
+      <strong>Question Type:</strong> {question.type}
+    </p>
+    <div style={{  margin: "0", color: "#666" }}>
+      <strong>Asked at:</strong>
+      <div
+        style={{
+          display: "inline-block",
+          marginTop: "0.5rem",
+          padding: "0.5rem",
+          backgroundColor: "#f4f4f4",
+          borderRadius: "4px",
+          fontWeight: "bold",
+        }}
+      >
+        {question.company.toUpperCase()}
+      </div>
     </div>
+  </div>
+</div>
+
+
 
     {/* Add the button to toggle the answer form */}
     <button className="form-button" onClick={() => setShowAnswerForm(!showAnswerForm)}>
@@ -358,9 +427,6 @@ const handleUpdateAnswer = async (answerId, newText) => {
   return (
     <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
       {/* <p>{answer.text}</p> */}
-      <p><strong>Likes:</strong> {answer.likes}</p>
-      <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
-
       <p>{displayedContent}</p>
 
                 {isLong && (
@@ -376,7 +442,8 @@ const handleUpdateAnswer = async (answerId, newText) => {
                     {expanded ? "Read Less" : "Read More"}
                   </button>
                 )}
-
+      <p><strong>By:</strong> {answer.postedBy} {timeAgo(answer.postedAt)}</p>
+      <p><strong>Likes:</strong> {answer.likes}</p>
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
         <button className="form-button" onClick={() => handleLike(answer.id, answer.likedByUser)}>
           <FontAwesomeIcon icon={faThumbsUp} color={answer.likedByUser ? "blue" : "inherit"} />

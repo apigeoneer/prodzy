@@ -179,9 +179,9 @@ const StoriesPage = () => {
                 <p>
                   <strong>By:</strong> {story.postedBy} {timeAgo(story.postedAt)}
                 </p>
-                <p>
+                {/* <p>
                   <strong>Likes:</strong> {story.likes}
-                </p>
+                </p> */}
                 {isLong && (
                   <button
                     onClick={() => toggleStoryExpand(story.id)}
