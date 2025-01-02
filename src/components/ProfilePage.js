@@ -63,9 +63,18 @@ const ProfilePage = () => {
   return (
     <div className='profile-container'>
       <h1 className='profile-header'>Your Profile</h1>
-      <button onClick={() => setIsEditing(!isEditing)} style={{marginBottom: 10, marginTop: 20}}>
+      <button 
+        onClick={() => {
+          if (!auth.currentUser) {
+            alert("You must be logged in to edit your profile.");
+            return;
+          }
+          setIsEditing(!isEditing)
+        }}
+        style={{marginBottom: 10, marginTop: 20}}>
         {isEditing ? "Cancel" : "Edit Profile"}
       </button>
+
 
       {!isEditing ? (
         <div className='profile-content'>

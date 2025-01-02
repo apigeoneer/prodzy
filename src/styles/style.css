@@ -85,7 +85,19 @@ body {
   
   h1 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    color: #121212;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #121212;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
     color: #121212;
   }
   

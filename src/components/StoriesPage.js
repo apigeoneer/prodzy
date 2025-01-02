@@ -177,7 +177,7 @@ const StoriesPage = () => {
                 <h3>{story.title}</h3>
                 <p>{displayedContent}</p>
                 <p>
-                  <strong>By:</strong> {story.postedBy} {timeAgo(story.postedAt)}
+                  <strong>By:</strong> {story.postedBy},  {timeAgo(story.postedAt)}
                 </p>
                 {/* <p>
                   <strong>Likes:</strong> {story.likes}
