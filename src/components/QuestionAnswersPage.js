@@ -6,6 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faComment, faShare } from '@fortawesome/free-solid-svg-icons';
 import { collection, addDoc, doc, updateDoc, arrayUnion, getDoc, query, where, getDocs, arrayRemove, increment, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { serverTimestamp } from 'firebase/firestore';
 
 
@@ -427,7 +429,9 @@ const handleUpdateAnswer = async (answerId, newText) => {
   return (
     <li key={index} style={{ border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
       {/* <p>{answer.text}</p> */}
-      <p>{displayedContent}</p>
+      {/* <p>{displayedContent}</p> */}
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedContent}</ReactMarkdown>
+
 
                 {isLong && (
                   <button
