@@ -85,13 +85,13 @@ body {
   
   h1 {
     margin: 0;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     color: #121212;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     color: #121212;
   }
 
@@ -258,6 +258,7 @@ footer {
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.2s ease;
+    margin-top: 20px;
   }
   
   .form-button:hover {

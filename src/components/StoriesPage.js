@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getStories } from '../services/dataService';
 import { timeAgo } from '../utils/formatTime'; // if using relative times
 import { collection, addDoc} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import {
   MIN_TITLE_LENGTH,
   MAX_TITLE_LENGTH,
@@ -113,8 +113,17 @@ const StoriesPage = () => {
 
   return (
     <div>
-      <h2>Stories</h2>
-      <button className="form-button" onClick={() => setShowStoryForm(!showStoryForm)}>
+      <h2>PM Stories</h2>
+      <button 
+        className="form-button"
+        onClick={() => {
+          if (!auth.currentUser) {
+            alert("Log in to share your story.");
+            return;
+          }
+          setShowStoryForm(!showStoryForm);
+        }}
+        >
         {showStoryForm ? "Cancel" : "Share Your Story"}
       </button>
 
